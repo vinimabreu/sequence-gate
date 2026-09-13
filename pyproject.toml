@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sequence-gate"
+version = "0.1.0"
+description = "Decide whether the next step of a follow-up sequence may fire: stop before the send, idempotent per case and step, quiet hours in the contact's timezone."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Vinicius Pereira" }]
+keywords = ["automation", "follow-up", "n8n", "make.com", "zapier", "idempotency", "escalation", "quiet-hours"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Communications",
+  "Typing :: Typed",
+]
+dependencies = ["pydantic>=2.6"]
+
+[project.optional-dependencies]
+service = ["fastapi>=0.110", "uvicorn>=0.27"]
+dev = ["pytest>=8", "mypy>=1.9", "ruff>=0.4", "httpx>=0.27"]
+
+[project.urls]
+Homepage = "https://github.com/vinimabreu/sequence-gate"
+Source = "https://github.com/vinimabreu/sequence-gate"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sequence_gate"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+exclude = ["tests/"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

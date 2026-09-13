@@ -1,0 +1,129 @@
+{
+  "name": "Follow-up loop (sequence-gate)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "minutes", "minutesInterval": 5 } ] }
+      },
+      "id": "cron",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [ -280, 300 ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "documentId": "={{ $vars.CASES_SHEET_ID }}",
+        "sheetName": "open_cases"
+      },
+      "id": "cases",
+      "name": "Open cases",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [ -60, 300 ],
+      "notes": "Any source of open case ids works. The gate does not care where they come from."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.GATE_URL }}/decide",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ case_id: $json.case_id }) }}",
+        "options": { "response": { "response": { "neverError": false } } }
+      },
+      "id": "decide",
+      "name": "Ask the gate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 160, 300 ],
+      "notes": "No step_id: the gate walks the sequence and reports the next actionable step."
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "caseSensitive": true }, "conditions": [ { "leftValue": "={{ $json.kind }}", "rightValue": "send", "operator": { "type": "string", "operation": "equals" } } ] }, "renameOutput": true, "outputKey": "send" },
+            { "conditions": { "options": { "caseSensitive": true }, "conditions": [ { "leftValue": "={{ $json.kind }}", "rightValue": "escalate", "operator": { "type": "string", "operation": "equals" } } ] }, "renameOutput": true, "outputKey": "escalate" },
+            { "conditions": { "options": { "caseSensitive": true }, "conditions": [ { "leftValue": "={{ $json.kind }}", "rightValue": "stop", "operator": { "type": "string", "operation": "equals" } } ] }, "renameOutput": true, "outputKey": "stop" }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "id": "switch",
+      "name": "Switch on the verdict",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [ 400, 300 ],
+      "notes": "The fallback output catches hold and skip. Both mean: do nothing this tick."
+    },
+    {
+      "parameters": {},
+      "id": "send",
+      "name": "Send it (your provider node)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [ 660, 160 ],
+      "notes": "Replace with Twilio, WhatsApp, SendGrid or whatever you use. The gate never sends."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.GATE_URL }}/sends",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ send_token: $('Ask the gate').item.json.send_token, provider_message_id: $json.sid || $json.id || 'unknown', status: 'sent' }) }}"
+      },
+      "id": "confirm",
+      "name": "Confirm the send",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [ 900, 160 ],
+      "notes": "Without this call the token expires and the step becomes decidable again. That is the point: a provider that timed out does not cost you a lost message or a duplicate."
+    },
+    {
+      "parameters": {},
+      "id": "escalate",
+      "name": "Hand to the next target",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [ 660, 320 ],
+      "notes": "escalate_to names the target. The last rung of every ladder is a person."
+    },
+    {
+      "parameters": {},
+      "id": "close",
+      "name": "Close the case",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [ 660, 460 ],
+      "notes": "reason says which signal ended it: replied, paid, disputed, closed or opted_out."
+    },
+    {
+      "parameters": {},
+      "id": "wait",
+      "name": "Nothing to do this tick",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [ 660, 600 ],
+      "notes": "hold carries retry_after. skip carries next_step_id."
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": { "main": [ [ { "node": "Open cases", "type": "main", "index": 0 } ] ] },
+    "Open cases": { "main": [ [ { "node": "Ask the gate", "type": "main", "index": 0 } ] ] },
+    "Ask the gate": { "main": [ [ { "node": "Switch on the verdict", "type": "main", "index": 0 } ] ] },
+    "Switch on the verdict": {
+      "main": [
+        [ { "node": "Send it (your provider node)", "type": "main", "index": 0 } ],
+        [ { "node": "Hand to the next target", "type": "main", "index": 0 } ],
+        [ { "node": "Close the case", "type": "main", "index": 0 } ],
+        [ { "node": "Nothing to do this tick", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Send it (your provider node)": { "main": [ [ { "node": "Confirm the send", "type": "main", "index": 0 } ] ] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "instanceId": "sequence-gate-example" }
+}

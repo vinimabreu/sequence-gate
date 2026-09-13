@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>sequence-gate</title>
+<style>
+  :root{
+    --ground:#05070A; --text:#D8E1E8; --amber:#FFB000; --muted:#6B7683;
+    --green:#37D67A; --red:#FF5C5C;
+    --hair:rgba(216,225,232,.11); --hair2:rgba(216,225,232,.22);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1280px;height:720px;overflow:hidden;background:var(--ground);color:var(--text)}
+  body{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;position:relative}
+
+  #stars{position:absolute;inset:0;z-index:0;pointer-events:none}
+  #stars i{position:absolute;width:1px;height:1px;background:var(--text);border-radius:50%}
+  #scan{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
+        background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
+  #vig{position:absolute;inset:0;z-index:59;pointer-events:none;
+       background:radial-gradient(ellipse at 50% 45%,transparent 60%,rgba(0,0,0,.55) 100%)}
+
+  .bar{position:absolute;left:0;right:0;z-index:40;display:flex;justify-content:space-between;
+       align-items:center;padding:0 34px;font-size:11px;letter-spacing:.22em;color:var(--muted);
+       text-transform:uppercase}
+  .bar.top{top:0;height:52px;border-bottom:1px solid var(--hair)}
+  .bar.bot{bottom:0;height:46px;border-top:1px solid var(--hair)}
+  .bar .name{color:var(--amber);letter-spacing:.28em}
+
+  .act{position:absolute;left:0;right:0;top:52px;bottom:46px;z-index:20;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       padding:0 64px;opacity:0}
+  .tag{font-size:11px;letter-spacing:.3em;color:var(--amber);text-transform:uppercase;margin-bottom:6px}
+  .hl{font-size:31px;letter-spacing:.02em;color:var(--text);margin-bottom:26px;text-align:center;
+      font-weight:600}
+  .sub{font-size:13px;color:var(--muted);margin-top:22px;text-align:center;line-height:1.7;max-width:900px}
+
+  .grid{display:grid;gap:10px;width:820px}
+  .row{display:grid;grid-template-columns:150px 1fr 118px;align-items:center;gap:16px;
+       border:1px solid var(--hair);padding:13px 18px;font-size:14px;opacity:0}
+  .row .k{color:var(--muted);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+  .row .v{color:var(--text)}
+  .row .s{text-align:right;font-size:12px;letter-spacing:.16em}
+  .s.send{color:var(--green)} .s.stop{color:var(--red)} .s.hold{color:var(--amber)}
+  .s.skip{color:var(--muted)}
+  .row.on{opacity:1}
+  .row.lit{border-color:var(--hair2);background:rgba(255,176,0,.05)}
+  .row.bad{border-color:rgba(255,92,92,.45);background:rgba(255,92,92,.07)}
+  .row.good{border-color:rgba(55,214,122,.4);background:rgba(55,214,122,.06)}
+
+  .fact{display:flex;gap:12px;align-items:baseline;font-size:14px;color:var(--muted);opacity:0}
+  .fact b{color:var(--text);font-weight:500}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:22px;width:940px}
+  .pane{border:1px solid var(--hair);padding:20px;opacity:0}
+  .pane h4{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+           margin-bottom:14px;font-weight:400}
+  .pane .out{font-size:20px;letter-spacing:.04em;margin-bottom:10px}
+  .pane .why{font-size:12px;color:var(--muted);line-height:1.6}
+  .pane.right h4{color:var(--red)}
+
+  .clocks{display:grid;grid-template-columns:1fr 1fr;gap:26px;width:760px}
+  .clock{border:1px solid var(--hair);padding:24px;text-align:center;opacity:0}
+  .clock .z{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .clock .t{font-size:52px;letter-spacing:.04em;margin-top:10px;font-variant-numeric:tabular-nums}
+  .clock.there .t{color:var(--red)}
+  .clock.here .t{color:var(--text)}
+
+  .verd{margin-top:26px;font-size:13px;letter-spacing:.18em;text-transform:uppercase;
+        border:1px solid var(--hair2);padding:13px 24px;opacity:0}
+  .verd .kind{color:var(--amber)}
+
+  .thesis{position:absolute;left:0;right:0;bottom:46px;z-index:30;text-align:center;
+          font-size:13px;color:var(--muted);padding:0 80px;opacity:0;line-height:1.7}
+  .thesis b{color:var(--text);font-weight:500}
+</style></head>
+<body>
+<div id="stars"></div>
+
+<div class="bar top">
+  <span class="name">sequence-gate</span>
+  <span id="tclock">act 00</span>
+</div>
+<div class="bar bot">
+  <span>github.com/vinimabreu/sequence-gate</span>
+  <span id="tprog">00:00</span>
+</div>
+
+<!-- 00 -->
+<div class="act" id="a0">
+  <div class="tag">the case</div>
+  <div class="hl">A dunning sequence, three steps, one contact</div>
+  <div class="grid" style="width:640px">
+    <div class="row f" style="grid-template-columns:200px 1fr"><span class="k">sequence</span><span class="v">dunning, 3 steps</span></div>
+    <div class="row f" style="grid-template-columns:200px 1fr"><span class="k">contact</span><span class="v">c-4417 in Asia/Kolkata</span></div>
+    <div class="row f" style="grid-template-columns:200px 1fr"><span class="k">quiet hours</span><span class="v">21:00 to 08:00 local</span></div>
+    <div class="row f" style="grid-template-columns:200px 1fr"><span class="k">cap</span><span class="v">1 sms per day, across every sequence</span></div>
+  </div>
+</div>
+
+<!-- 01 -->
+<div class="act" id="a1">
+  <div class="tag">01 &nbsp;stop before the send</div>
+  <div class="hl">The invoice is paid on day 4</div>
+  <div class="grid">
+    <div class="row s1"><span class="k">day 0</span><span class="v">email &middot; tpl.invoice_due</span><span class="s send">SEND</span></div>
+    <div class="row s1"><span class="k">day 3</span><span class="v">sms &middot; tpl.reminder</span><span class="s send">SEND</span></div>
+    <div class="row s1 paid"><span class="k">day 4</span><span class="v">stripe reports the invoice paid</span><span class="s skip">SIGNAL</span></div>
+    <div class="row s1 fin"><span class="k">day 7</span><span class="v">sms &middot; tpl.final &nbsp;<span style="color:#6B7683">stopping_signal</span></span><span class="s stop">STOP</span></div>
+  </div>
+  <div class="sub" id="a1sub">Nothing is written to the ledger for a step that was never allowed to fire.</div>
+</div>
+
+<!-- 02 -->
+<div class="act" id="a2">
+  <div class="tag">02 &nbsp;the orchestrator restarts</div>
+  <div class="hl">Same case, same step, asked twice</div>
+  <div class="two">
+    <div class="pane left">
+      <h4>keyed on (case, step)</h4>
+      <div class="out" style="color:var(--muted)">SKIP &nbsp;already_sent</div>
+      <div class="why">The reservation for this step already exists. The original token comes back, and nothing leaves the building.</div>
+    </div>
+    <div class="pane right">
+      <h4>keyed on the provider id</h4>
+      <div class="out" style="color:var(--red)">SEND &nbsp;clear</div>
+      <div class="why">The retry carries a fresh id, so the index reports no prior send. esp-9f31 and esp-1c08: two messages, one intent.</div>
+    </div>
+  </div>
+  <div class="sub" id="a2sub">Both ledgers ship in this repo. The wrong one has a test that watches it double-send.</div>
+</div>
+
+<!-- 03 -->
+<div class="act" id="a3">
+  <div class="tag">03 &nbsp;whose clock</div>
+  <div class="hl">18:42 on the server is 00:12 on the nightstand</div>
+  <div class="clocks">
+    <div class="clock here"><div class="z">server &middot; utc</div><div class="t">18:42</div></div>
+    <div class="clock there"><div class="z">contact &middot; asia/kolkata</div><div class="t">00:12</div></div>
+  </div>
+  <div class="verd"><span class="kind">HOLD</span> &nbsp;quiet_hours &nbsp;&middot;&nbsp; retry_after 02:30 utc</div>
+</div>
+
+<div class="thesis" id="th">
+  The workflow already knows how to send. <b>This is the service it asks first.</b>
+</div>
+
+<div id="vig"></div><div id="scan"></div>
+
+<script>
+(function(){
+  // starfield, deterministic
+  var s=document.getElementById('stars'), seed=7;
+  function rnd(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }
+  for(var i=0;i<130;i++){
+    var e=document.createElement('i');
+    e.style.left=(rnd()*1280)+'px'; e.style.top=(rnd()*720)+'px';
+    e.style.opacity=(0.06+rnd()*0.3).toFixed(3);
+    s.appendChild(e);
+  }
+
+  var DUR=21000;
+  var A=[
+    {el:'a0', from:0,     to:4600},
+    {el:'a1', from:4600,  to:11600},
+    {el:'a2', from:11600, to:17000},
+    {el:'a3', from:17000, to:21000}
+  ];
+  function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  function ramp(t,a,b){ return clamp((t-a)/(b-a),0,1); }
+
+  function render(t){
+    t=clamp(t,0,DUR);
+    // acts
+    A.forEach(function(a,idx){
+      var el=document.getElementById(a.el);
+      // The first act carries no fade-in on purpose: a frame 0 that is black reads as
+      // a broken file in every thumbnail the GIF ever appears in.
+      var inn=(idx===0)?1:ramp(t,a.from,a.from+420);
+      var out=1-ramp(t,a.to-380,a.to);
+      el.style.opacity=(t>=a.from&&t<a.to)?(inn*out).toFixed(3):'0';
+    });
+
+    // The counter is set once, after the loop, or the last act always wins it.
+    var cur=0;
+    for(var k=0;k<A.length;k++){ if(t>=A[k].from) cur=k; }
+    document.getElementById('tclock').textContent='act 0'+cur;
+
+    // 00 facts
+    var f=document.querySelectorAll('#a0 .row.f');
+    for(var i=0;i<f.length;i++){
+      f[i].style.opacity=(i===0?1:ramp(t,500+i*430,900+i*430)).toFixed(3);
+    }
+
+    // 01 rows
+    var r=document.querySelectorAll('#a1 .row.s1');
+    for(var j=0;j<r.length;j++){
+      r[j].style.opacity=ramp(t,5200+j*1000,5600+j*1000).toFixed(3);
+    }
+    var paid=document.querySelector('#a1 .paid');
+    paid.className='row s1 paid'+(t>7200?' lit':'');
+    var fin=document.querySelector('#a1 .fin');
+    fin.className='row s1 fin'+(t>9400?' good':'');
+    document.getElementById('a1sub').style.opacity=ramp(t,10000,10500).toFixed(3);
+
+    // 02 panes
+    var p=document.querySelectorAll('#a2 .pane');
+    p[0].style.opacity=ramp(t,12100,12600).toFixed(3);
+    p[1].style.opacity=ramp(t,13400,13900).toFixed(3);
+    document.getElementById('a2sub').style.opacity=ramp(t,15200,15700).toFixed(3);
+
+    // 03 clocks
+    var c=document.querySelectorAll('#a3 .clock');
+    c[0].style.opacity=ramp(t,17400,17900).toFixed(3);
+    c[1].style.opacity=ramp(t,18300,18800).toFixed(3);
+    document.querySelector('#a3 .verd').style.opacity=ramp(t,19300,19800).toFixed(3);
+
+    // thesis + progress
+    document.getElementById('th').style.opacity=(t>19900?ramp(t,19900,20400):0).toFixed(3);
+    var sec=Math.floor(t/1000);
+    document.getElementById('tprog').textContent='00:'+(sec<10?'0':'')+sec;
+  }
+
+  window.__seek=function(ms){ render(ms); };
+  window.__DUR=DUR;
+
+  var q=new URLSearchParams(location.search);
+  render(q.has('t')?parseInt(q.get('t'),10):0);
+})();
+</script>
+</body></html>

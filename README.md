@@ -7,6 +7,11 @@
 ![typed-mypy%20strict-blue](https://img.shields.io/badge/typed-mypy%20strict-blue)
 ![license-MIT-lightgrey](https://img.shields.io/badge/license-MIT-lightgrey)
 
+![sequence-gate in four acts](assets/sequence-gate.gif)
+
+Every value in that animation comes out of `python examples/demo.py`, which runs the four
+scenes against the real engine and prints what it decided.
+
 Your n8n, Make or Zapier scenario already knows how to send a message. What it does not
 know is whether it should. `sequence-gate` is the service it asks first.
 
